@@ -1,207 +1,210 @@
-# 🤖 TD3-Based Autonomous Navigation in Unknown Environments
+# TD3-Based Autonomous Navigation in Unknown Environments
 
-A reinforcement learning pipeline that trains a TurtleBot3 to autonomously navigate through maze-like environments using the **Twin Delayed Deep Deterministic Policy Gradient (TD3)** algorithm. The robot learns purely from **LiDAR sensor data** and **relative goal information** — no pre-built maps, no path planners, no hand-crafted rules.
+A reinforcement learning pipeline that trains a TurtleBot3 to navigate maze-like environments using the **Twin Delayed Deep Deterministic Policy Gradient (TD3)** algorithm. The robot learns purely from **LiDAR data** and **relative goal information**, with no pre-built maps, path planners, or hand-crafted rules.
 
-> **Key Result:** The trained agent generalizes to completely unseen maze layouts, achieving **98% success rate** on the training map and demonstrating robust obstacle avoidance on novel test environments.
-
----
-
-## 📹 Demos
-
-### Demo 1 — Training Map Navigation
-https://github.com/user-attachments/assets/demo1.webm
-
-### Demo 2 — Unseen Test Map (Generalization)
-https://github.com/user-attachments/assets/demo2.webm
-
-> The demo videos are located in the [`demos/`](demos/) directory.
+**Key result:** the trained agent achieves a **~98% success rate** on the training map and shows robust obstacle avoidance on an unseen maze layout.
 
 ---
 
-## 🏗️ Project Architecture
+## Table of Contents
 
-```mermaid
-flowchart TB
-    subgraph Simulation ["🌍 Gazebo Simulation"]
-        GZ["Gazebo World<br/>(10×10 Maze)"]
-        ROBOT["TurtleBot3<br/>Differential Drive"]
-        LIDAR["LiDAR Sensor<br/>20 Beams, 180°"]
-        ODOM["Odometry<br/>Pose & Velocity"]
-    end
-
-    subgraph Environment ["🧩 Gym Environment (NavEnv)"]
-        OBS["Observation Builder<br/>24-dim vector"]
-        REWARD["Reward Function<br/>Geodesic + Proximity + Movement"]
-        RESET["Episode Manager<br/>Random Spawn & Goal"]
-        BFS["BFS Distance Field<br/>(Privileged, Reward-Only)"]
-    end
-
-    subgraph Agent ["🧠 TD3 Agent"]
-        ACTOR["Actor Network<br/>[800, 600] MLP"]
-        CRITIC["Twin Critics<br/>[800, 600] MLP"]
-        BUFFER["Replay Buffer<br/>300K transitions"]
-        NOISE["Gaussian Noise<br/>σ = 0.1"]
-    end
-
-    subgraph Outputs ["📊 Outputs"]
-        MODEL["Saved Model<br/>td3_nav_final.zip"]
-        TB["TensorBoard Logs"]
-        MARKER["Goal Marker<br/>Green Sphere in Gazebo"]
-    end
-
-    GZ --> ROBOT
-    ROBOT --> LIDAR
-    ROBOT --> ODOM
-    LIDAR --> OBS
-    ODOM --> OBS
-    OBS --> AGENT
-    AGENT --> |"[linear_vel, angular_vel]"| ROBOT
-    BFS --> REWARD
-    REWARD --> AGENT
-    RESET --> GZ
-    AGENT --> MODEL
-    AGENT --> TB
-    RESET --> MARKER
-```
+1. [Demos](#demos)
+2. [System Architecture](#system-architecture)
+3. [Training Pipeline](#training-pipeline)
+4. [Design Decisions](#design-decisions)
+5. [Project Structure](#project-structure)
+6. [Getting Started](#getting-started)
+7. [Running Inference](#running-inference)
+8. [Resuming Training](#resuming-training)
+9. [Results](#results)
+10. [Tech Stack](#tech-stack)
 
 ---
 
-## 🔬 Training Pipeline
+## Demos
+
+| Training map | Unseen test map (generalization) |
+|:---:|:---:|
+| [![Training map demo](demos/demo1.gif)](demos/demo1.mp4) | [![Test map demo](demos/demo2.gif)](demos/demo2.mp4) |
+| [Watch full video](demos/demo1.mp4) | [Watch full video](demos/demo2.mp4) |
+
+---
+
+## System Architecture
 
 ```mermaid
 flowchart LR
-    A["1. Launch Gazebo<br/>+ Spawn Robot"] --> B["2. Initialize NavEnv<br/>(Gym Wrapper)"]
-    B --> C["3. Random Spawn<br/>& Random Goal"]
-    C --> D["4. Agent Observes<br/>24-dim State"]
-    D --> E["5. TD3 Predicts<br/>Action + Noise"]
-    E --> F["6. Robot Executes<br/>10 Hz Control"]
-    F --> G{"7. Episode<br/>Outcome?"}
-    G -->|"✅ Goal Reached"| H["Reward: +100"]
-    G -->|"❌ Collision"| I["Reward: -100"]
-    G -->|"⏳ Timeout"| J["Truncated"]
-    G -->|"🔄 In Progress"| K["Shaped Reward:<br/>Geodesic + Proximity"]
-    H --> C
-    I --> C
-    J --> C
-    K --> D
+    subgraph SIM["Gazebo Simulation"]
+        ROBOT["TurtleBot3<br/>Differential drive"]
+        SENSORS["LiDAR (20 beams, 180 deg)<br/>Odometry"]
+    end
+
+    subgraph ENV["Gymnasium Environment (NavEnv)"]
+        OBS["Observation builder<br/>24-dim state"]
+        REW["Reward function"]
+        BFS["BFS distance field<br/>(training only)"]
+    end
+
+    subgraph AGENT["TD3 Agent"]
+        BUF["Replay buffer<br/>300K transitions"]
+        CRITIC["Twin critics<br/>MLP 800-600"]
+        ACTOR["Actor<br/>MLP 800-600"]
+    end
+
+    ROBOT --> SENSORS
+    SENSORS --> OBS
+    BFS --> REW
+    OBS --> BUF
+    REW --> BUF
+    BUF --> CRITIC
+    CRITIC --> ACTOR
+    OBS --> ACTOR
+    ACTOR -- "linear / angular velocity" --> ROBOT
+
+    classDef sim fill:#eef2f7,stroke:#5b6b7f,color:#1f2933;
+    classDef env fill:#f3f1ea,stroke:#7a7360,color:#1f2933;
+    classDef agent fill:#eaf3ee,stroke:#5f7f6b,color:#1f2933;
+    class ROBOT,SENSORS sim;
+    class OBS,REW,BFS env;
+    class BUF,CRITIC,ACTOR agent;
 ```
 
 ---
 
-## 🧠 Strategy & Design Decisions
+## Training Pipeline
 
-### Why TD3?
+```mermaid
+flowchart TD
+    A["Reset: random spawn and random goal"] --> B["Observe 24-dim state"]
+    B --> C["TD3 action + exploration noise"]
+    C --> D["Execute command at 10 Hz"]
+    D --> E{"Episode status"}
+    E -- "Goal reached (+100)" --> A
+    E -- "Collision (-100)" --> A
+    E -- "Timeout (truncated)" --> A
+    E -- "In progress (shaped reward)" --> B
 
-TD3 (Twin Delayed DDPG) is ideal for continuous-action robotic control because it:
-- Outputs **continuous velocity commands** directly (no discretization artifacts)
-- Uses **twin critics** to combat Q-value overestimation
+    classDef step fill:#eef2f7,stroke:#5b6b7f,color:#1f2933;
+    classDef decision fill:#f3f1ea,stroke:#7a7360,color:#1f2933;
+    class A,B,C,D step;
+    class E decision;
+```
+
+---
+
+## Design Decisions
+
+### Why TD3
+
+TD3 is well suited to continuous-action robotic control:
+
+- Outputs **continuous velocity commands** directly, with no discretization artifacts
+- Uses **twin critics** to reduce Q-value overestimation
 - Applies **delayed policy updates** for training stability
 - Adds **target policy smoothing** to prevent exploitation of critic errors
 
 ### Observation Space (24-dim)
 
 | Component | Dimensions | Range | Purpose |
-|---|---|---|---|
-| LiDAR beams | 20 | [0, 1] | Inverted normalization — 1.0 = obstacle nearby |
-| Goal distance | 1 | [0, 1] | Normalized by arena diagonal (14m) |
-| Goal angle | 1 | [-1, 1] | Relative heading to goal / π |
+|---|:---:|:---:|---|
+| LiDAR beams | 20 | [0, 1] | Inverted normalization; 1.0 means an obstacle is nearby |
+| Goal distance | 1 | [0, 1] | Normalized by arena diagonal (14 m) |
+| Goal angle | 1 | [-1, 1] | Relative heading to goal divided by pi |
 | Linear velocity | 1 | [-0.5, 0.5] | Current forward speed |
 | Angular velocity | 1 | [-1.0, 1.0] | Current turning rate |
 
 ### Action Space (2-dim, continuous)
 
 | Action | Range | Description |
-|---|---|---|
-| Linear velocity | [-0.5, 0.5] m/s | Forward/backward speed |
+|---|:---:|---|
+| Linear velocity | [-0.5, 0.5] m/s | Forward / backward speed |
 | Angular velocity | [-1.0, 1.0] rad/s | Turning rate |
 
-### Reward Shaping Strategy
+### Reward Function
 
-The reward function combines **five complementary signals** to guide learning:
+The reward combines six complementary signals:
 
 | Signal | Value | Purpose |
 |---|---|---|
-| **Goal reached** | +100 | Sparse terminal reward |
-| **Collision** | -100 | Sparse terminal penalty |
-| **Geodesic progress** | ±5 × Δ_BFS | BFS-based shaping guides through corridors (reward-only, not in obs) |
-| **Proximity penalty** | -8 × (0.4 - d_min) | Continuous wall avoidance before collision |
-| **Movement quality** | +0.5 × v - 0.4 × \|ω\| | Encourages forward motion, penalizes spinning |
-| **Step cost** | -0.1 | Encourages efficiency |
+| Goal reached | +100 | Sparse terminal reward |
+| Collision | -100 | Sparse terminal penalty |
+| Geodesic progress | +/- 5 x delta_BFS | BFS-based shaping through corridors (reward only, not in observation) |
+| Proximity penalty | -8 x (0.4 - d_min) | Continuous wall avoidance before collision |
+| Movement quality | +0.5 x v - 0.4 x abs(w) | Encourages forward motion, penalizes spinning |
+| Step cost | -0.1 | Encourages efficiency |
 
 ### Why It Generalizes to New Maps
 
-The key insight: **the agent never sees the map**. Its observation space contains only:
-1. **Raw LiDAR readings** — reactive obstacle sensing
-2. **Relative goal vector** — direction and distance to target
+The agent never observes the map. Its input consists only of:
 
-Since the BFS geodesic reward is used **only during training** (privileged information for reward shaping), the agent's learned policy is purely a function of local sensor data. This means the same policy works in **any environment** — the robot has learned general obstacle avoidance and goal-seeking behaviors, not map-specific trajectories.
+1. **Raw LiDAR readings** for reactive obstacle sensing
+2. **A relative goal vector** giving direction and distance to the target
+
+The BFS geodesic signal is used **only during training** as privileged information for reward shaping. The learned policy is therefore a function of local sensor data alone, so it learns general obstacle avoidance and goal seeking rather than map-specific trajectories.
 
 ### TD3 Hyperparameters
 
 | Parameter | Value |
 |---|---|
 | Network architecture | MLP [800, 600] |
-| Learning rate | 3 × 10⁻⁴ |
+| Learning rate | 3e-4 |
 | Replay buffer | 300,000 transitions |
 | Batch size | 256 |
 | Warmup steps | 5,000 (random actions) |
-| Discount factor (γ) | 0.99 |
-| Soft update (τ) | 0.005 |
+| Discount factor (gamma) | 0.99 |
+| Soft update (tau) | 0.005 |
 | Policy delay | 2 |
 | Target noise | 0.2 (clipped at 0.5) |
-| Exploration noise | Gaussian, σ = 0.1 |
+| Exploration noise | Gaussian, sigma = 0.1 |
 | Control frequency | 10 Hz |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 PPO_nav/
 ├── src/
-│   ├── rl_env/                          # Core RL package
+│   ├── rl_env/                           # Core RL package
 │   │   └── rl_env/
-│   │       ├── nav_env.py               # Gymnasium environment (observation, reward, reset)
-│   │       ├── ros_node.py              # ROS2 interface (pub/sub, teleport, goal marker)
-│   │       ├── maze_generator.py        # BFS distance field computation
-│   │       ├── train.py                 # TD3 training loop with checkpointing
-│   │       ├── inference.py             # Inference loop with random goal cycling
-│   │       └── set_goal.py             # CLI tool to publish goal poses
-│   ├── rl_robot_description/            # Robot URDF/Xacro model
-│   ├── rl_robot_control/                # Diff-drive controller config
-│   └── rl_robot_gazebo/                 # Gazebo worlds & launch files
+│   │       ├── nav_env.py                # Gymnasium environment (observation, reward, reset)
+│   │       ├── ros_node.py               # ROS2 interface (pub/sub, teleport, goal marker)
+│   │       ├── maze_generator.py         # BFS distance field computation
+│   │       ├── train.py                  # TD3 training loop with checkpointing
+│   │       ├── inference.py              # Inference loop with random goal cycling
+│   │       └── set_goal.py               # CLI tool to publish goal poses
+│   ├── rl_robot_description/             # Robot URDF/Xacro model
+│   ├── rl_robot_control/                 # Diff-drive controller config
+│   └── rl_robot_gazebo/                  # Gazebo worlds and launch files
 │       ├── launch/
-│       │   ├── simulation.launch.py     # Training map launcher
+│       │   ├── simulation.launch.py      # Training map launcher
 │       │   └── simulation_test.launch.py # Test map launcher (unseen layout)
 │       └── worlds/
-│           ├── navigation.world         # Original training maze (22 obstacles)
-│           └── navigation_test.world    # New test maze (25 obstacles)
+│           ├── navigation.world          # Training maze (22 obstacles)
+│           └── navigation_test.world     # Test maze (25 obstacles)
 ├── td3_models/
-│   └── td3_nav_final.zip               # Trained TD3 model (210K steps)
-├── demos/
-│   ├── demo1.webm                       # Training map demo
-│   └── demo2.webm                       # Test map demo (generalization)
-└── td3_nav_tensorboard/                 # Training logs
+│   └── td3_nav_final.zip                 # Trained TD3 model (210K steps)
+├── demos/                                # Demo videos and GIF previews
+└── td3_nav_tensorboard/                  # Training logs
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- **Ubuntu 22.04** with **ROS2 Humble**
-- **Gazebo 11** (comes with ROS2 Humble desktop)
-- Python 3.10+, pip
+- Ubuntu 22.04 with ROS2 Humble
+- Gazebo 11 (included with the ROS2 Humble desktop install)
+- Python 3.10+ and pip
+
+### Installation
 
 ```bash
 # Install Python dependencies
 pip install stable-baselines3 gymnasium numpy
-```
 
-### Build the Workspace
-
-```bash
+# Build the workspace
 cd ~/PPO_nav
 colcon build
 source install/setup.bash
@@ -209,41 +212,40 @@ source install/setup.bash
 
 ---
 
-## ▶️ Running Inference (Testing the Trained Model)
+## Running Inference
 
-### On the Training Map
+Run the simulation and the agent in two separate terminals.
 
-**Terminal 1** — Start the Gazebo simulation:
+### Training Map
+
 ```bash
+# Terminal 1: simulation
 source install/setup.bash
 ros2 launch rl_robot_gazebo simulation.launch.py
-```
 
-**Terminal 2** — Run the TD3 agent:
-```bash
+# Terminal 2: agent
 source install/setup.bash
 ros2 run rl_env inference
 ```
 
-### On the Unseen Test Map
+### Unseen Test Map
 
-**Terminal 1** — Start the test simulation:
 ```bash
+# Terminal 1: simulation
 source install/setup.bash
 ros2 launch rl_robot_gazebo simulation_test.launch.py
-```
 
-**Terminal 2** — Run inference (same command):
-```bash
+# Terminal 2: agent (same command)
 source install/setup.bash
 ros2 run rl_env inference
 ```
 
-> The green sphere in Gazebo shows the current target. The robot will cycle through random goals automatically. Watch the terminal for ✅ success and ❌ collision logs.
+The green sphere in Gazebo marks the current target. The robot cycles through random goals automatically, and the terminal logs `[SUCCESS]` and `[COLLISION]` events.
 
 ### Setting a Custom Goal
 
-Open a **third terminal** and send a specific goal:
+In a third terminal:
+
 ```bash
 source install/setup.bash
 ros2 run rl_env set_goal 2.0 -3.0
@@ -251,44 +253,43 @@ ros2 run rl_env set_goal 2.0 -3.0
 
 ---
 
-## 🏋️ Resuming Training
+## Resuming Training
 
-Training automatically resumes from the latest checkpoint:
+Training resumes automatically from the latest checkpoint.
 
-**Terminal 1** — Gazebo:
 ```bash
+# Terminal 1: simulation
 source install/setup.bash
 ros2 launch rl_robot_gazebo simulation.launch.py
-```
 
-**Terminal 2** — Training:
-```bash
+# Terminal 2: training
 source install/setup.bash
 ros2 run rl_env train
 ```
 
 Monitor progress with TensorBoard:
+
 ```bash
 tensorboard --logdir td3_nav_tensorboard/
 ```
 
 ---
 
-## 📊 Results
+## Results
 
 | Metric | Training Map | Test Map (Unseen) |
 |---|---|---|
-| Success Rate | ~98% | Robust navigation observed |
-| Collision Avoidance | Learned proximity-based wall avoidance | Generalizes to new obstacle layouts |
-| Goal Seeking | Efficient paths through corridors | Navigates novel corridors successfully |
+| Success rate | ~98% | Robust navigation observed |
+| Collision avoidance | Learned proximity-based wall avoidance | Generalizes to new obstacle layouts |
+| Goal seeking | Efficient paths through corridors | Navigates novel corridors successfully |
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **RL Framework:** [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3) (TD3)
-- **Environment:** [Gymnasium](https://gymnasium.farama.org/) (custom `NavEnv`)
-- **Simulation:** Gazebo 11 + ROS2 Humble
-- **Robot:** TurtleBot3 (differential drive, 360° LiDAR)
-
----
+| Layer | Technology |
+|---|---|
+| RL framework | [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3) (TD3) |
+| Environment | [Gymnasium](https://gymnasium.farama.org/) (custom `NavEnv`) |
+| Simulation | Gazebo 11, ROS2 Humble |
+| Robot | TurtleBot3 (differential drive, 2D LiDAR) |
