@@ -292,7 +292,3 @@ tensorboard --logdir td3_nav_tensorboard/
 - **Robot:** TurtleBot3 (differential drive, 360° LiDAR)
 
 ---
-
-## 📝 License
-
-This project was developed as part of the **eYSIP 2026 — VLA-Based Bimanual Collaborative Stacking** internship program.
