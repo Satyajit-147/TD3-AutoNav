@@ -25,8 +25,8 @@ A reinforcement learning pipeline that trains a TurtleBot3 to navigate maze-like
 
 | Training map | Unseen test map (generalization) |
 |:---:|:---:|
-| [![Training map demo](demos/demo1.gif)](demos/demo1.mp4) | [![Test map demo](demos/demo2.gif)](demos/demo2.mp4) |
-| [Watch full video](demos/demo1.mp4) | [Watch full video](demos/demo2.mp4) |
+| [![Training map demo](demos/demo1.gif)](demos/demo1.webm) | [![Test map demo](demos/demo2.gif)](demos/demo2.webm) |
+| [Watch full video](demos/demo1.webm) | [Watch full video](demos/demo2.webm) |
 
 ---
 
