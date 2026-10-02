@@ -1,0 +1,236 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="default">
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    
+    <!-- Boundary walls (Outer Enclosure: 10x10 meters, from -5 to 5) -->
+    <!-- North/South boundaries -->
+    <model name="bound_n">
+      <pose>0 5.25 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link"><collision name="collision"><geometry><box><size>11 0.5 1</size></box></geometry></collision><visual name="visual"><geometry><box><size>11 0.5 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link>
+    </model>
+    <model name="bound_s">
+      <pose>0 -5.25 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link"><collision name="collision"><geometry><box><size>11 0.5 1</size></box></geometry></collision><visual name="visual"><geometry><box><size>11 0.5 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link>
+    </model>
+    <!-- East/West boundaries -->
+    <model name="bound_e">
+      <pose>5.25 0 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link"><collision name="collision"><geometry><box><size>0.5 10 1</size></box></geometry></collision><visual name="visual"><geometry><box><size>0.5 10 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link>
+    </model>
+    <model name="bound_w">
+      <pose>-5.25 0 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link"><collision name="collision"><geometry><box><size>0.5 10 1</size></box></geometry></collision><visual name="visual"><geometry><box><size>0.5 10 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link>
+    </model>
+
+    <!-- ===== STATIC MAZE OBSTACLES (22 blocks, 1m x 1m x 1m each) ===== -->
+    <!--
+    Map layout (10x10 grid, · = free, █ = wall):
+       0 1 2 3 4 5 6 7 8 9
+    0: · · · · · · · · · ·
+    1: · · █ · █ █ · · █ ·
+    2: · · █ · · · · █ · ·
+    3: · · · · █ · · █ · ·
+    4: · █ █ · █ · █ · · ·
+    5: · · · · · · █ · █ ·
+    6: · · █ █ · · · · █ ·
+    7: · · · █ · █ · · · ·
+    8: · █ · · · █ █ · · ·
+    9: · · · · · · · · · ·
+    -->
+
+    <model name="obs_0">
+      <pose>-3.5 -2.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_1">
+      <pose>-3.5 -0.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_2">
+      <pose>-3.5 0.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_3">
+      <pose>-3.5 3.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_4">
+      <pose>-2.5 -2.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_5">
+      <pose>-2.5 2.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_6">
+      <pose>-1.5 -0.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_7">
+      <pose>-1.5 2.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_8">
+      <pose>-0.5 -3.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_9">
+      <pose>-0.5 -2.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_10">
+      <pose>-0.5 -0.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_11">
+      <pose>-0.5 1.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_12">
+      <pose>0.5 1.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_13">
+      <pose>0.5 3.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_14">
+      <pose>1.5 -2.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_15">
+      <pose>1.5 -1.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_16">
+      <pose>1.5 3.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_17">
+      <pose>2.5 -1.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_18">
+      <pose>2.5 0.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_19">
+      <pose>3.5 -3.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_20">
+      <pose>3.5 0.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_21">
+      <pose>3.5 1.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry><material><ambient>0.8 0.2 0.1 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Gazebo physics and state plugin -->
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros>
+        <namespace>/</namespace>
+      </ros>
+      <update_rate>50</update_rate>
+    </plugin>
+  </world>
+</sdf>

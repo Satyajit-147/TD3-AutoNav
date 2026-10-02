@@ -1,0 +1,21 @@
+# Build artifacts
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+
+# TensorBoard logs
+ppo_nav_tensorboard/
+td3_nav_tensorboard/
+
+# OS files
+.DS_Store
+*.swp
+*~
+
+# Temporary/test files
+test_env.py
