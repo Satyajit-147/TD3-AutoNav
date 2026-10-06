@@ -1,0 +1,34 @@
+[INFO] [launch]: All log files can be found below /home/satyajit/.ros/log/2026-10-06-12-02-18-718376-satyajit-Inspiron-15-3520-18129
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gzserver-1]: process started with pid [18204]
+[INFO] [gzclient-2]: process started with pid [18206]
+[INFO] [robot_state_publisher-3]: process started with pid [18208]
+[INFO] [spawn_entity.py-4]: process started with pid [18210]
+[robot_state_publisher-3] [WARN] [1791268340.778234359] [kdl_parser]: The root link base_link has an inertia specified in the URDF, but KDL does not support a root link with an inertia.  As a workaround, you can add an extra dummy link to your URDF.
+[robot_state_publisher-3] [INFO] [1791268340.778448449] [robot_state_publisher]: got segment base_link
+[robot_state_publisher-3] [INFO] [1791268340.778537871] [robot_state_publisher]: got segment caster_link
+[robot_state_publisher-3] [INFO] [1791268340.778560252] [robot_state_publisher]: got segment left_wheel_link
+[robot_state_publisher-3] [INFO] [1791268340.778584235] [robot_state_publisher]: got segment lidar_link
+[robot_state_publisher-3] [INFO] [1791268340.778598934] [robot_state_publisher]: got segment right_wheel_link
+[spawn_entity.py-4] [INFO] [1791268341.607246303] [spawn_entity]: Spawn Entity started
+[spawn_entity.py-4] [INFO] [1791268341.607814689] [spawn_entity]: Loading entity published on topic robot_description
+[spawn_entity.py-4] [INFO] [1791268341.610651757] [spawn_entity]: Waiting for entity xml on robot_description
+[spawn_entity.py-4] [INFO] [1791268341.614228457] [spawn_entity]: Waiting for service /spawn_entity, timeout = 30
+[spawn_entity.py-4] [INFO] [1791268341.614707540] [spawn_entity]: Waiting for service /spawn_entity
+[gzserver-1] [INFO] [1791268343.060165588] [gazebo_ros_state]: Publishing states of gazebo models at [/model_states]
+[gzserver-1] [INFO] [1791268343.062186593] [gazebo_ros_state]: Publishing states of gazebo links at [/link_states]
+[spawn_entity.py-4] [INFO] [1791268343.123015858] [spawn_entity]: Calling service /spawn_entity
+[spawn_entity.py-4] [INFO] [1791268343.368156242] [spawn_entity]: Spawn status: SpawnEntity: Successfully spawned entity [rl_robot]
+[gzserver-1] [INFO] [1791268343.506287369] [diff_drive]: Wheel pair 1 separation set to [0.300000m]
+[gzserver-1] [INFO] [1791268343.507844191] [diff_drive]: Wheel pair 1 diameter set to [0.100000m]
+[gzserver-1] [INFO] [1791268343.510110702] [diff_drive]: Subscribed to [/cmd_vel]
+[gzserver-1] [INFO] [1791268343.513979565] [diff_drive]: Advertise odometry on [/odom]
+[gzserver-1] [INFO] [1791268343.517592766] [diff_drive]: Publishing odom transforms between [odom] and [base_link]
+[gzserver-1] [INFO] [1791268343.517710909] [diff_drive]: Publishing wheel transforms between [base_link], [left_wheel_joint] and [right_wheel_joint]
+[gzserver-1] [INFO] [1791268343.536072381] [joint_state_publisher]: Going to publish joint [left_wheel_joint]
+[gzserver-1] [INFO] [1791268343.536185535] [joint_state_publisher]: Going to publish joint [right_wheel_joint]
+[INFO] [spawn_entity.py-4]: process has finished cleanly [pid 18210]
+[robot_state_publisher-3] [INFO] [1791268897.127678373] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [robot_state_publisher-3]: process has finished cleanly [pid 18208]
+[INFO] [gzclient-2]: process has finished cleanly [pid 18206]
+[INFO] [gzserver-1]: process has finished cleanly [pid 18204]

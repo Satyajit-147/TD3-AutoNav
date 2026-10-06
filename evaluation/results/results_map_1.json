@@ -1,0 +1,22 @@
+{
+    "map_idx": "1",
+    "episodes": 20,
+    "success": 12,
+    "collision": 1,
+    "timeout": 7,
+    "total_steps": 5276,
+    "success_steps": [
+        205,
+        131,
+        90,
+        142,
+        143,
+        114,
+        225,
+        138,
+        110,
+        187,
+        76,
+        100
+    ]
+}

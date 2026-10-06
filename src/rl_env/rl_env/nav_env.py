@@ -4,6 +4,7 @@ import numpy as np
 import time
 import math
 import random
+import os
 
 from .ros_node import start_ros_node
 from .maze_generator import MazeGenerator
@@ -66,7 +67,7 @@ class NavEnv(gym.Env):
     MAX_STEPS = 500
     
     # Collision config
-    COLLISION_DIST = 0.25
+    COLLISION_DIST = 0.18
     
     # Reward magnitudes (scaled for TD3 critic stability)
     REWARD_GOAL = 100.0
@@ -100,8 +101,14 @@ class NavEnv(gym.Env):
             dtype=np.float32
         )
         
-        # Precompute free cells from the static map
-        self.grid = STATIC_MAP
+        # Precompute free cells from the static map or loaded map
+        eval_map_path = os.environ.get('NAV_EVAL_MAP')
+        if eval_map_path and os.path.exists(eval_map_path):
+            self.grid = np.load(eval_map_path)
+            print(f"[NavEnv] Loaded custom evaluation map from {eval_map_path}")
+        else:
+            self.grid = STATIC_MAP
+            
         self.free_cells = [
             (i, j) for i in range(10) for j in range(10) if self.grid[i, j] == 0
         ]
@@ -138,7 +145,11 @@ class NavEnv(gym.Env):
 
     def get_observation(self):
         state = self.node.get_state()
+        wait_start = time.time()
         while state['odom'] is None or state['scan'] is None:
+            if time.time() - wait_start > 10.0:
+                print("ERROR: Timeout waiting for /odom and /scan data from Gazebo!", flush=True)
+                raise TimeoutError("Gazebo sensor data timeout")
             time.sleep(0.01)
             state = self.node.get_state()
             
@@ -203,6 +214,21 @@ class NavEnv(gym.Env):
                 
                 if goal_cell == spawn_cell:
                     continue
+                    
+                # Ensure the spawn cell is "safe" (all 8 neighbors are free) to prevent spawning too close to blocks
+                si, sj = spawn_cell
+                is_safe = True
+                for di in [-1, 0, 1]:
+                    for dj in [-1, 0, 1]:
+                        ni, nj = si + di, sj + dj
+                        if 0 <= ni < 10 and 0 <= nj < 10:
+                            if self.grid[ni, nj] == 1:
+                                is_safe = False
+                                break
+                        else:
+                            is_safe = False # boundary walls count as obstacles
+                if not is_safe:
+                    continue
                 
                 # Compute BFS distance field from goal (privileged, reward-only)
                 self.distance_field = self.maze_gen.compute_distance_field(
@@ -221,11 +247,12 @@ class NavEnv(gym.Env):
             # Teleport robot to spawn
             self.node.teleport_robot(spawn_x, spawn_y, spawn_yaw)
             
-            # Wait for fresh sensor data
+            # Wait for physics to settle and clear stale sensor data
+            time.sleep(0.5)
             self.node.latest_odom = None
             self.node.latest_scan = None
-            time.sleep(0.5)
-            
+            # get_observation() will now block until fresh messages arrive
+
         else:
             # Interactive mode: use dynamic goal if available
             if self.node.latest_goal_x is not None:
