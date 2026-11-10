@@ -16,7 +16,7 @@ A reinforcement learning pipeline that trains a TurtleBot3 to navigate maze-like
 6. [Getting Started](#getting-started)
 7. [Running Inference](#running-inference)
 8. [Resuming Training](#resuming-training)
-9. [Results](#results)
+9. [Quantitative Evaluation](#quantitative-evaluation)
 10. [Tech Stack](#tech-stack)
 
 ---
@@ -325,35 +325,31 @@ tensorboard --logdir td3_nav_tensorboard/
 
 ## Quantitative Evaluation
 
-To rigorously prove the zero-shot generalization capabilities of the trained agent, we developed an automated evaluation pipeline that tests the agent across 10 distinct, procedurally generated unseen maps. 
+To measure zero-shot generalization, an automated evaluation pipeline tests the trained agent on procedurally generated maps it has never seen, with no retraining.
 
 The evaluation process:
-1. Dynamically generates 10 new random maps with guaranteed varying obstacle densities and corridor structures.
+1. Generates 10 random maps with varying obstacle densities and corridor structures (`evaluation/maps/`).
 2. Runs 20 episodes per map.
-3. Randomly teleports the robot to a new safe spawn and dynamically moves the goal marker for every episode.
-4. Records the success rate across all episodes without any retraining.
+3. Teleports the robot to a new safe spawn and moves the goal marker for every episode.
+4. Records each episode as a success, collision or timeout.
 
 ### Results Table
 
-Our findings demonstrate that the model successfully generalizes to entirely new environments relying purely on reactive local LiDAR sensing, without requiring a global map.
+Results are reported for the maps evaluated so far. The raw per-map files are in `evaluation/results/`.
 
-| Environment | Map Description | Episodes | Success Rate |
-|---|---|:---:|:---:|
-| **Training Map** | Original training maze | 100 | **98.0%** |
-| **Map 0** | Unseen Test Layout | 20 | 92.5% |
-| **Map 1** | Unseen Test Layout | 20 | 89.0% |
-| **Map 2** | Unseen Test Layout | 20 | 93.5% |
-| **Map 3** | Unseen Test Layout | 20 | 91.0% |
-| **Map 4** | Unseen Test Layout | 20 | 89.5% |
-| **Map 5** | Unseen Test Layout | 20 | 92.0% |
-| **Map 6** | Unseen Test Layout | 20 | 94.0% |
-| **Map 7** | Unseen Test Layout | 20 | 88.5% |
-| **Map 8** | Unseen Test Layout | 20 | 90.5% |
-| **Map 9** | Unseen Test Layout | 20 | 93.0% |
+| Environment | Episodes | Success | Collision | Timeout | Success Rate | Mean steps to goal |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Training map** | 100 | | | | **~98%** | |
+| **Unseen map 0** | 20 | 15 | 2 | 3 | 75% | 159 |
+| **Unseen map 1** | 20 | 12 | 1 | 7 | 60% | 138 |
+| **Unseen map 2** | 20 | 13 | 2 | 5 | 65% | 132 |
+| **Unseen maps, combined** | 60 | 40 | 5 | 15 | **66.7%** | 144 |
+
+On unseen layouts the policy reaches the goal in about two thirds of episodes without a global map. Most failures are timeouts rather than collisions (15 of 20), which indicates that obstacle avoidance transfers well while goal-seeking in unfamiliar corridor layouts is the main weakness. Maps 3 to 9 are generated but have not been evaluated yet.
 
 ### Running the Evaluation Pipeline
 
-You can independently verify these results by running the automated evaluation script, which handles launching Gazebo headlessly, rotating through the generated maps, and executing the episodes:
+You can reproduce these results, and evaluate the remaining maps, by running the automated evaluation script, which handles launching Gazebo headlessly, rotating through the generated maps, and executing the episodes:
 
 ```bash
 cd ~/PPO_nav
